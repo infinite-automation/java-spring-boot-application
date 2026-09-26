@@ -1,0 +1,11 @@
+﻿:root{color-scheme:light;font-family:"Segoe UI",Arial,sans-serif;background:#f6f4ee;color:#242923}
+*{box-sizing:border-box}
+body{margin:0;min-width:280px;background:radial-gradient(ellipse at 85% 15%,#e2e7d980,transparent 50%),radial-gradient(ellipse at 10% 90%,#f0dacc55,transparent 50%)}
+main{min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:clamp(24px,6vw,96px)}
+h1{margin:0;max-width:1100px;text-align:center;font-weight:600;font-size:clamp(36px,7vw,100px);line-height:1.13;letter-spacing:-.045em;text-wrap:balance}
+h1 span{display:block}
+.language{font-size:1.65em;font-weight:800;line-height:1;letter-spacing:-.055em;margin-bottom:24px;color:#242923}
+.pipeline{color:#b94922}
+.deployment{margin-top:8px}
+::selection{background:#f7c7b2;color:#242923}
+@media(max-width:480px){h1{font-size:clamp(30px,8vw,38px)}.language{font-size:1.85em;margin-bottom:18px}.deployment{margin-top:10px}}
