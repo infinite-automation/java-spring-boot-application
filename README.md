@@ -64,6 +64,19 @@ Quote the full option if the path contains spaces. Environment-specific absolute
 
 ## Tests and coverage
 
+### GitHub Actions
+
+The workflow in `.github/workflows/maven.yml` runs on pushes, pull requests, and manual runs from the GitHub Actions tab.
+
+1. **Build with Maven:** uses Java 17 on Ubuntu, packages the JAR with tests skipped, and uploads it as `application-jar`.
+2. **Run tests and generate coverage:** starts only after the build succeeds (`needs: build`). Runs the unit and application integration tests and uploads JUnit results and JaCoCo reports as `test-results-and-coverage`, including available reports when tests fail.
+
+Each job starts on a separate runner. The test job checks out the same source and compiles it for testing; it does not test the uploaded JAR. Maven dependencies are cached between jobs/runs.
+
+Commit and push the project with `pom.xml`, `mvnw`, and `.github/` at the repository root. Download reports from the workflow run's **Artifacts** section, then open `index.html` inside the JaCoCo report folder. A failed test fails the test job and the workflow.
+
+### Local tests
+
 | Platform | Run tests and generate coverage |
 | --- | --- |
 | Windows | `.\mvnw.cmd test` |
