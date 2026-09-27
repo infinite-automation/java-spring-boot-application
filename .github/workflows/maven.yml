@@ -89,14 +89,14 @@ jobs:
           semgrep scan \
             --config auto \
             --json \
-            --output semgrep-results.json .
+            --output semgrep-results.txt .
 
       - name: Upload Semgrep scan result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-scan-results
-          path: semgrep-results.json
+          path: semgrep-results.txt
           if-no-files-found: warn
 
       - name: Run Trivy filesystem scan
@@ -105,7 +105,7 @@ jobs:
           scan-type: fs
           scan-ref: .
           format: json
-          output: trivy-results.json
+          output: trivy-results.txt
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           exit-code: '0'
 
@@ -114,7 +114,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trivy-scan-results
-          path: trivy-results.json
+          path: trivy-results.txt
           if-no-files-found: warn
 
       - name: Install ClamAV
