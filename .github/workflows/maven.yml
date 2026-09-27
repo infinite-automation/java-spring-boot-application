@@ -74,3 +74,161 @@ jobs:
             -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
             -Dsonar.organization=infinite-automation \
             -Dsonar.host.url=https://sonarcloud.io
+
+
+
+
+  name: Maven Build and Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  build:
+    name: Build with Maven
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build the application
+        run: |
+          sh ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+
+      - name: Upload application JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/hello-java-*.jar
+          if-no-files-found: error
+
+
+  test:
+    name: Test and SonarQube Scan
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Run unit and application tests
+        run: |
+          sh ./mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-and-coverage
+          path: |
+            target/surefire-reports/
+            target/site/jacoco/
+          if-no-files-found: warn
+
+      - name: SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sh ./mvnw --batch-mode --no-transfer-progress \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar \
+            -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
+            -Dsonar.organization=infinite-automation \
+            -Dsonar.host.url=https://sonarcloud.io
+
+
+ 
+
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+
+      - name: Run Semgrep scan
+        run: |
+          semgrep scan \
+            --config auto \
+            --json \
+            --output semgrep-results.json .
+
+      - name: Upload Semgrep scan result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-scan-results
+          path: semgrep-results.json
+          if-no-files-found: warn
+
+
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-results.json
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: '0'
+
+      - name: Upload Trivy scan result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: trivy-results.json
+          if-no-files-found: warn
+
+
+
+
+      - name: Install ClamAV
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clamav
+
+      - name: Update ClamAV signatures
+        run: |
+          sudo freshclam || true
+
+      - name: Run ClamAV scan
+        continue-on-error: true
+        run: |
+          clamscan \
+            --recursive \
+            --infected \
+            . \
+            | tee clamav-results.txt
+
+      - name: Upload ClamAV scan result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clamav-scan-results
+          path: clamav-results.txt
+          if-no-files-found: warn
