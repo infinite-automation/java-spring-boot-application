@@ -36,7 +36,7 @@ jobs:
           if-no-files-found: error
 
   test:
-    name: Run tests and generate coverage
+    name: Test and scan the code
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
