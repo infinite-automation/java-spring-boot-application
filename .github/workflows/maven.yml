@@ -64,12 +64,12 @@ jobs:
             target/surefire-reports/
             target/site/jacoco/
           if-no-files-found: warn
-      - name: Run tests and SonarQube analysis
+          
+      - name: SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./mvnw --batch-mode --no-transfer-progress \
-            verify \
+          sh ./mvnw --batch-mode --no-transfer-progress \
             org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
             -Dsonar.organization=infinite-automation \
