@@ -142,3 +142,34 @@ jobs:
           name: clamav-scan-results
           path: clamav-results.txt
           if-no-files-found: warn
+
+  docker:
+    name: Docker Build and Trivy Image Scan
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t hello-java:${{ github.sha }} .
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: hello-java:${{ github.sha }}
+          format: json
+          output: trivy-image-results.json
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: '0'
+
+      - name: Upload Trivy image scan result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-scan-results
+          path: trivy-image-results.json
+          if-no-files-found: warn
