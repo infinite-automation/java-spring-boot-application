@@ -1,0 +1,36 @@
+name: Java CICD Pipeline
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build with Maven
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build the application
+        run: sh ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+
+      - name: Upload application JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/hello-java-*.jar
+          if-no-files-found: error
+
+  

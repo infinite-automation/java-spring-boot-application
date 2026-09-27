@@ -50,6 +50,21 @@ You can also run directly from source:
 | Windows | `.\mvnw.cmd spring-boot:run` |
 | Linux/macOS | `sh ./mvnw spring-boot:run` |
 
+## Run with Docker
+
+Install and start Docker with Linux container support. Run these commands from the project root on Windows, Linux, or macOS:
+
+```text
+docker build -t java-demo .
+docker run --rm --name java-demo -p 127.0.0.1:8082:8080 java-demo
+```
+
+Open http://localhost:8082/. Host port 8082 avoids conflicting with the local Java server on 8081. The application listens on port 8080 inside the container. Stop it from another terminal with `docker stop java-demo`.
+
+The Dockerfile uses two stages: Java 17 JDK builds the application and runs tests with the Maven wrapper; Java 17 JRE runs the resulting JAR as a non-root user. No local Maven or Java installation is needed for the Docker build. Base images come from [official Eclipse Temurin images](https://hub.docker.com/_/eclipse-temurin).
+
+Console logs appear in the terminal; file logs are stored at `/app/logs/app.log` inside the container and are removed with the container. To preserve file logs, add `--mount type=volume,source=java-demo-logs,target=/app/logs` before `java-demo` in the run command.
+
 ## Portable logging
 
 Logs are written to the console and `logs/app.log`, relative to the directory where you start the application. Use a writable working directory. No system log directory or administrator/root privileges are required.
