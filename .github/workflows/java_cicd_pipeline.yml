@@ -65,3 +65,13 @@ jobs:
             target/surefire-reports/
             target/site/jacoco/
           if-no-files-found: warn
+
+      - name: SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sh ./mvnw --batch-mode --no-transfer-progress \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar \
+            -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
+            -Dsonar.organization=infinite-automation \
+            -Dsonar.host.url=https://sonarcloud.io
