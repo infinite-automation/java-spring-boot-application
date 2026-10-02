@@ -112,28 +112,3 @@ jobs:
           path: trivy-results.txt
           if-no-files-found: warn
 
-      - name: Install ClamAV
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clamav
-
-      - name: Update ClamAV signatures
-        run: |
-          sudo freshclam || true
-
-      - name: Run ClamAV scan
-        continue-on-error: true
-        run: |
-          clamscan \
-            --recursive \
-            --infected \
-            . \
-            | tee clamav-results.txt
-
-      - name: Upload ClamAV scan result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: clamav-scan-results
-          path: clamav-results.txt
-          if-no-files-found: warn
