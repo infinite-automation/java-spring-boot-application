@@ -140,3 +140,17 @@ jobs:
           name: clamav-scan-results
           path: clamav-results.txt
           if-no-files-found: warn
+
+  docker:
+    name: Docker Build and Trivy Image Scan
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v5
+
+      - name: Build Docker image
+        run: |
+          docker build -t hello-java:${{ github.sha }} .
