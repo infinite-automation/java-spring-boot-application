@@ -154,3 +154,19 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t hello-java:${{ github.sha }} .
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: hello-java:${{ github.sha }}
+          output: trivy-image-results.txt
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: '0'
+
+      - name: Upload Trivy image scan result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-scan-results
+          path: trivy-image-results.json
+          if-no-files-found: warn
