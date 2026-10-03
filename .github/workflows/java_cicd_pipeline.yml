@@ -168,5 +168,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trivy-image-scan-results
-          path: trivy-image-results.json
+          path: trivy-image-results.txt
           if-no-files-found: warn
