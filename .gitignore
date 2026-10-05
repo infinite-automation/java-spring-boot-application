@@ -1,6 +1,16 @@
 HELP.md
 target/
 logs/
+
+# Local Terraform configuration, state, and downloaded providers
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+crash.log
+crash.*.log
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

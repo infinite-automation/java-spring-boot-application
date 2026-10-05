@@ -4,6 +4,8 @@ A portable Java application built with Spring Boot and Maven. The same source co
 
 ## Requirements
 
+For an optional AWS EKS demo cluster in `us-east-1`, see [terraform/README.md](terraform/README.md). It includes local setup, cluster outputs, kubectl connection commands, and cleanup instructions.
+
 - Install a JDK and make `java` available on your PATH. If `JAVA_HOME` is set, it must point to that JDK.
 - The included Maven wrappers download Maven automatically; a separate Maven installation is not required.
 - The first build needs internet access to download Maven and dependencies. Linux/macOS need a POSIX shell and curl or wget for the wrapper download.
