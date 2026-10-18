@@ -194,8 +194,8 @@ jobs:
   #           ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }}
 
   kubernetes-scan:
-    # name: Kubernetes lint and security scan
-    needs: docker
+    name: Kubernetes lint and security scan
+    # needs: docker
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
