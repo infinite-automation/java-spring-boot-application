@@ -67,6 +67,32 @@ The Dockerfile uses two stages: Java 17 JDK builds the application and runs test
 
 Console logs appear in the terminal; file logs are stored at `/app/logs/app.log` inside the container and are removed with the container. To preserve file logs, add `--mount type=volume,source=java-demo-logs,target=/app/logs` before `java-demo` in the run command.
 
+## Deploy to Kubernetes
+
+The manifests in `k8s/` run two replicas using the published Docker image and expose the application through a LoadBalancer Service on port 80, forwarding to container port 8080.
+
+To pull the image locally (optional; Kubernetes pulls it automatically):
+
+```text
+docker pull infiniteautomation/hello-java:abee3a473a3e788ee0dacd0b7967b56f4b5baf0e
+```
+
+With `kubectl` configured for your target cluster, run:
+
+```text
+kubectl apply -f k8s/
+kubectl rollout status deployment/hello-java
+kubectl get service hello-java
+```
+
+Open `http://<EXTERNAL-IP>/` using the external IP or hostname shown for the Service. The cluster needs a load balancer integration; the external address may remain pending until a load balancer is provisioned.
+
+To remove the deployment and Service:
+
+```text
+kubectl delete -f k8s/
+```
+
 ## Portable logging
 
 Logs are written to the console and `logs/app.log`, relative to the directory where you start the application. Use a writable working directory. No system log directory or administrator/root privileges are required.
