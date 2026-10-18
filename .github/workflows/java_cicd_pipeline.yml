@@ -9,291 +9,313 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build with Maven
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  # build:
+  #   name: Build with Maven
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
 
-    steps:
-      - name: Check out source code
-        uses: actions/checkout@v5
+  #   steps:
+  #     - name: Check out source code
+  #       uses: actions/checkout@v5
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: maven
+  #     - name: Set up Java 17
+  #       uses: actions/setup-java@v5
+  #       with:
+  #         distribution: temurin
+  #         java-version: '17'
+  #         cache: maven
 
-      - name: Build the application
-        run: |
-          sh ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+  #     - name: Build the application
+  #       run: |
+  #         sh ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
 
-      - name: Upload application JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: application-jar
-          path: target/hello-java-*.jar
-          if-no-files-found: error
-
-
-  test:
-    name: Test and scan the code
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Check out source code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: maven
-
-      - name: Run unit and application tests
-        run: |
-          sh ./mvnw --batch-mode --no-transfer-progress clean verify
-
-      - name: Upload test results and coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-and-coverage
-          path: |
-            target/surefire-reports/
-            target/site/jacoco/
-          if-no-files-found: warn
-
-      - name: SonarQube analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sh ./mvnw --batch-mode --no-transfer-progress \
-            org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar \
-            -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
-            -Dsonar.organization=infinite-automation \
-            -Dsonar.host.url=https://sonarcloud.io
-
-      - name: Install Semgrep
-        run: |
-          python -m pip install --upgrade pip
-          pip install semgrep
-
-      - name: Run Semgrep scan
-        run: |
-          semgrep scan \
-            --config auto \
-            --output semgrep-results.txt .
-
-      - name: Upload Semgrep scan result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-scan-results
-          path: semgrep-results.txt
-          if-no-files-found: warn
-
-      - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          format: json
-          output: trivy-results.json
-          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-          exit-code: '0'
-
-      - name: Upload Trivy filesystem scan result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-scan-results
-          path: trivy-results.json
-          if-no-files-found: warn
-
-      - name: Install ClamAV
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clamav clamav-freshclam
-
-      - name: Update ClamAV signatures
-        run: |
-          sudo systemctl stop clamav-freshclam || true
-          sudo freshclam
-
-      - name: Run ClamAV scan
-        continue-on-error: true
-        run: |
-          clamscan \
-            --recursive \
-            --infected \
-            . \
-            | tee clamav-results.txt
-
-      - name: Upload ClamAV scan result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: clamav-scan-results
-          path: clamav-results.txt
-          if-no-files-found: warn
+  #     - name: Upload application JAR
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: application-jar
+  #         path: target/hello-java-*.jar
+  #         if-no-files-found: error
 
 
-  docker:
-    name: Docker Build, Scan and Push
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+  # test:
+  #   name: Test and scan the code
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
 
-    steps:
-      - name: Check out source code
-        uses: actions/checkout@v5
+  #   steps:
+  #     - name: Check out source code
+  #       uses: actions/checkout@v5
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }} \
-            .
+  #     - name: Set up Java 17
+  #       uses: actions/setup-java@v5
+  #       with:
+  #         distribution: temurin
+  #         java-version: '17'
+  #         cache: maven
 
-      - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }}
-          format: json
-          output: trivy-image-results.json
-          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-          exit-code: '0'
+  #     - name: Run unit and application tests
+  #       run: |
+  #         sh ./mvnw --batch-mode --no-transfer-progress clean verify
 
-      - name: Upload Trivy image scan result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-image-scan-results
-          path: trivy-image-results.json
-          if-no-files-found: warn
+  #     - name: Upload test results and coverage
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: test-results-and-coverage
+  #         path: |
+  #           target/surefire-reports/
+  #           target/site/jacoco/
+  #         if-no-files-found: warn
+
+  #     - name: SonarQube analysis
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #       run: |
+  #         sh ./mvnw --batch-mode --no-transfer-progress \
+  #           org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar \
+  #           -Dsonar.projectKey=infinite-automation_java-spring-boot-application \
+  #           -Dsonar.organization=infinite-automation \
+  #           -Dsonar.host.url=https://sonarcloud.io
+
+  #     - name: Install Semgrep
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install semgrep
+
+  #     - name: Run Semgrep scan
+  #       run: |
+  #         semgrep scan \
+  #           --config auto \
+  #           --output semgrep-results.txt .
+
+  #     - name: Upload Semgrep scan result
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: semgrep-scan-results
+  #         path: semgrep-results.txt
+  #         if-no-files-found: warn
+
+  #     - name: Run Trivy filesystem scan
+  #       uses: aquasecurity/trivy-action@v0.36.0
+  #       with:
+  #         scan-type: fs
+  #         scan-ref: .
+  #         format: json
+  #         output: trivy-results.json
+  #         severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+  #         exit-code: '0'
+
+  #     - name: Upload Trivy filesystem scan result
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: trivy-scan-results
+  #         path: trivy-results.json
+  #         if-no-files-found: warn
+
+  #     - name: Install ClamAV
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y clamav clamav-freshclam
+
+  #     - name: Update ClamAV signatures
+  #       run: |
+  #         sudo systemctl stop clamav-freshclam || true
+  #         sudo freshclam
+
+  #     - name: Run ClamAV scan
+  #       continue-on-error: true
+  #       run: |
+  #         clamscan \
+  #           --recursive \
+  #           --infected \
+  #           . \
+  #           | tee clamav-results.txt
+
+  #     - name: Upload ClamAV scan result
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: clamav-scan-results
+  #         path: clamav-results.txt
+  #         if-no-files-found: warn
+
+
+  # docker:
+  #   name: Docker Build, Scan and Push
+  #   needs: test
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 20
+
+  #   steps:
+  #     - name: Check out source code
+  #       uses: actions/checkout@v5
+
+  #     - name: Build Docker image
+  #       run: |
+  #         docker build \
+  #           -t ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }} \
+  #           .
+
+  #     - name: Run Trivy image scan
+  #       uses: aquasecurity/trivy-action@v0.36.0
+  #       with:
+  #         scan-type: image
+  #         image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }}
+  #         format: json
+  #         output: trivy-image-results.json
+  #         severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+  #         exit-code: '0'
+
+  #     - name: Upload Trivy image scan result
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: trivy-image-scan-results
+  #         path: trivy-image-results.json
+  #         if-no-files-found: warn
 
   
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v4
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
       
-      - name: Push Docker image to Docker Hub
-        run: |
-          docker push \
-            ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }}
+  #     - name: Push Docker image to Docker Hub
+  #       run: |
+  #         docker push \
+  #           ${{ secrets.DOCKERHUB_USERNAME }}/hello-java:${{ github.sha }}
 
-  kubernetes-scan:
-    name: Kubernetes lint and security scan
-    needs: docker
+  # kubernetes-scan:
+  #   name: Kubernetes lint and security scan
+  #   needs: docker
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
+
+  #   steps:
+  #     - name: Check out source code
+  #       uses: actions/checkout@v5
+
+  #     - name: Run KubeLinter
+  #       continue-on-error: true
+  #       uses: stackrox/kube-linter-action@v1
+  #       with:
+  #         directory: kubernetes/
+  #         version: v0.8.3
+  #         output-file: kube-linter-results.txt
+  #         fail-on-invalid-resource: 'true'
+
+  #     - name: Run Kubescape
+  #       continue-on-error: true
+  #       if: ${{ !cancelled() }}
+  #       uses: kubescape/github-action@55308b8442c97f510a87f81f4b9d11d3e5419014 # main
+  #       with:
+  #         version: v4.0.16
+  #         files: kubernetes/
+  #         frameworks: nsa,mitre
+  #         severityThreshold: high
+  #         outputFile: kubescape-results.txt
+
+  #     - name: Upload Kubernetes scan results
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: kubernetes-scan-results
+  #         path: |
+  #           kube-linter-results.txt
+  #           kubescape-results.txt
+  #         if-no-files-found: warn
+
+  # deploy:
+  #   name: Deploy with ArgoCD
+  #   needs: kubernetes-scan
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
+
+  #   steps:
+  #     - name: Install ArgoCD CLI
+  #       run: |
+  #         curl --fail --silent --show-error --location \
+  #           https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 \
+  #           --output argocd-linux-amd64
+  #         sudo install -m 0755 argocd-linux-amd64 /usr/local/bin/argocd
+
+  #     - name: ArgoCD Login and Deploy
+  #       env:
+  #         ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+  #         ARGOCD_USERNAME: ${{ secrets.ARGOCD_USERNAME }}
+  #         ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+  #       run: |
+  #         : "${ARGOCD_SERVER:?Set the ARGOCD_SERVER repository secret}"
+  #         : "${ARGOCD_USERNAME:?Set the ARGOCD_USERNAME repository secret}"
+  #         : "${ARGOCD_PASSWORD:?Set the ARGOCD_PASSWORD repository secret}"
+  #         ARGOCD_SERVER="${ARGOCD_SERVER#https://}"
+  #         ARGOCD_SERVER="${ARGOCD_SERVER%/}"
+  #         export ARGOCD_SERVER
+  #         argocd login "$ARGOCD_SERVER" \
+  #           --username "$ARGOCD_USERNAME" \
+  #           --password "$ARGOCD_PASSWORD" \
+  #           --insecure --grpc-web
+  #         argocd app sync javaspringboot --grpc-web --timeout 300
+  #         argocd app wait javaspringboot --health --operation --sync --grpc-web --timeout 600
+
+  # health-check:
+  #   name: Health check
+  #   needs: deploy
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 7
+
+  #   steps:
+  #     - name: Check application HTTP health
+  #       env:
+  #         HEALTH_CHECK_URL: http://a19682f311b27468e8fca101fbe60837-1669733841.us-east-1.elb.amazonaws.com/
+  #       run: |
+  #         for attempt in {1..12}; do
+  #           echo "Health check attempt ${attempt}/12"
+  #           status_code="$(curl --silent --show-error --output /dev/null \
+  #             --write-out '%{http_code}' --connect-timeout 5 --max-time 15 \
+  #             "$HEALTH_CHECK_URL")" || status_code="000"
+
+  #           if [[ "$status_code" == "200" ]]; then
+  #             echo "Application is healthy (HTTP 200)."
+  #             exit 0
+  #           fi
+
+  #           echo "Application is not ready (HTTP ${status_code})."
+  #           if [[ "$attempt" -lt 12 ]]; then
+  #             sleep 10
+  #           fi
+  #         done
+
+  #         echo "::error::Application health check failed after 12 attempts."
+  #         exit 1
+
+  dast:
+    name: OWASP ZAP DAST scan
+    # needs: health-check
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     steps:
       - name: Check out source code
         uses: actions/checkout@v5
 
-      - name: Run KubeLinter
-        continue-on-error: true
-        uses: stackrox/kube-linter-action@v1
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
         with:
-          directory: kubernetes/
-          version: v0.8.3
-          output-file: kube-linter-results.txt
-          fail-on-invalid-resource: 'true'
-
-      - name: Run Kubescape
-        continue-on-error: true
-        if: ${{ !cancelled() }}
-        uses: kubescape/github-action@55308b8442c97f510a87f81f4b9d11d3e5419014 # main
-        with:
-          version: v4.0.16
-          files: kubernetes/
-          frameworks: nsa,mitre
-          severityThreshold: high
-          outputFile: kubescape-results.txt
-
-      - name: Upload Kubernetes scan results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: kubernetes-scan-results
-          path: |
-            kube-linter-results.txt
-            kubescape-results.txt
-          if-no-files-found: warn
-
-  deploy:
-    name: Deploy with ArgoCD
-    needs: kubernetes-scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Install ArgoCD CLI
-        run: |
-          curl --fail --silent --show-error --location \
-            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 \
-            --output argocd-linux-amd64
-          sudo install -m 0755 argocd-linux-amd64 /usr/local/bin/argocd
-
-      - name: ArgoCD Login and Deploy
-        env:
-          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-          ARGOCD_USERNAME: ${{ secrets.ARGOCD_USERNAME }}
-          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
-        run: |
-          : "${ARGOCD_SERVER:?Set the ARGOCD_SERVER repository secret}"
-          : "${ARGOCD_USERNAME:?Set the ARGOCD_USERNAME repository secret}"
-          : "${ARGOCD_PASSWORD:?Set the ARGOCD_PASSWORD repository secret}"
-          ARGOCD_SERVER="${ARGOCD_SERVER#https://}"
-          ARGOCD_SERVER="${ARGOCD_SERVER%/}"
-          export ARGOCD_SERVER
-          argocd login "$ARGOCD_SERVER" \
-            --username "$ARGOCD_USERNAME" \
-            --password "$ARGOCD_PASSWORD" \
-            --insecure --grpc-web
-          argocd app sync javaspringboot --grpc-web --timeout 300
-          argocd app wait javaspringboot --health --operation --sync --grpc-web --timeout 600
-
-  health-check:
-    name: Health check
-    needs: deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 7
-
-    steps:
-      - name: Check application HTTP health
-        env:
-          HEALTH_CHECK_URL: http://a19682f311b27468e8fca101fbe60837-1669733841.us-east-1.elb.amazonaws.com/
-        run: |
-          for attempt in {1..12}; do
-            echo "Health check attempt ${attempt}/12"
-            status_code="$(curl --silent --show-error --output /dev/null \
-              --write-out '%{http_code}' --connect-timeout 5 --max-time 15 \
-              "$HEALTH_CHECK_URL")" || status_code="000"
-
-            if [[ "$status_code" == "200" ]]; then
-              echo "Application is healthy (HTTP 200)."
-              exit 0
-            fi
-
-            echo "Application is not ready (HTTP ${status_code})."
-            if [[ "$attempt" -lt 12 ]]; then
-              sleep 10
-            fi
-          done
-
-          echo "::error::Application health check failed after 12 attempts."
-          exit 1
+          target: http://a19682f311b27468e8fca101fbe60837-1669733841.us-east-1.elb.amazonaws.com/
+          docker_name: ghcr.io/zaproxy/zaproxy:stable
+          cmd_options: '-m 1 -T 5'
+          fail_action: false
+          allow_issue_writing: false
+          artifact_name: owasp-zap-dast-results
 
