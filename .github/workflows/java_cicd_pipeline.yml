@@ -221,8 +221,7 @@ jobs:
           files: kubernetes/
           frameworks: nsa,mitre
           severityThreshold: high
-          format: json
-          outputFile: kubescape-results
+          outputFile: kubescape-results.txt
 
       - name: Upload Kubernetes scan results
         if: always()
@@ -231,6 +230,6 @@ jobs:
           name: kubernetes-scan-results
           path: |
             kube-linter-results.txt
-            kubescape-results.json
+            kubescape-results.txt
           if-no-files-found: warn
 
